@@ -1,17 +1,15 @@
----
-title: "Workouts - EDA"
-output: github_document
----
+# Read data from Workout Tracker google sheet and writes out data/workouts.rds
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+# Source: https://docs.google.com/spreadsheets/d/1MM9UbkV46tahIXGiSPDBS0vCAG3Q7ugqIwAwouqoujg/edit?usp=drive_web&ouid=101998553146455490972
+# Author: Sam Robertson
+# Version: 9-2-2019
 
-```{r}
+# Libraries
 library(tidyverse)
 library(googlesheets)
 library(lubridate)
 
+# Parameters
 SHEET_NAME <- "Workout Tracker (Responses)"
 colnames <- c(
   time = "Timestamp",
@@ -30,10 +28,11 @@ colnames <- c(
   cardio_style = "Style", # steady state or interval
   stretch = "Stretch?"
 )
-```
+# Output file
+file_out <- here::here("data/workouts.rds")
 
+#===============================================================================
 
-```{r}
 gs_auth(new_user = TRUE) # use personal account
 
 sheet_key <- 
@@ -41,8 +40,7 @@ sheet_key <-
   filter(sheet_title == SHEET_NAME) %>% 
   pull(sheet_key)
 
-df <- 
-  gs_key(sheet_key) %>%
+gs_key(sheet_key) %>%
   gs_read(
     col_types = cols(
       Timestamp = col_character(),
@@ -66,59 +64,14 @@ df <-
       Description = col_character(),
       `Stretch?` = col_character(),
       `Stretch duration` = col_number()
-    )
+    ),
+    na = c("NA", "", "N/A")
   ) %>% 
   rename(!!colnames) %>%
-  janitor::clean_names()
-```
-
-```{r}
-df <-
-  df %>%
+  janitor::clean_names() %>% 
   mutate(
     time = mdy_hms(time),
     date = as_date(time),
     stretch = (stretch == "Yes")
-  )
-```
-
-# Time series of duration of workout over the past two weeks (could have other periods of time)
-
-```{r}
-df %>%
-  group_by(date) %>%
-  summarize(duration = sum(duration, na.rm = TRUE)) %>%
-  ggplot(aes(date, duration)) +
-  geom_col() +
-  geom_line(color = "red") +
-  scale_x_date(date_breaks = "1 days", date_labels = "%b %d") +
-  scale_y_continuous(
-    breaks = seq(0, 90, by = 15), 
-    labels = function(x) str_c(x, " min")
-  ) +
-  theme(axis.text.x = element_text(hjust = 1, angle = 45)) +
-  labs(x = NULL, y = "Total Duration of Exercise")
-```
-
-# What type of exercise have I been doing? (Also allow to filter to recent)
-
-```{r}
-df %>%
-  mutate(
-    type = case_when(
-      workout_type == "Les Mills On Demand" ~ program,
-      workout_type == "Run/Walk/Bike/Swim" ~ as.character(glue::glue("{cardio_type} ({cardio_style})")),
-      TRUE ~ program
-    )
-  ) %>%
-  group_by(type) %>%
-  summarize(duration = sum(duration)) %>%
-  ggplot(aes(reorder(type, -duration), duration)) +
-  geom_col() +
-  labs(
-    x = NULL,
-    y = "Total Minutes"
-  )
-```
-
-
+  ) %>% 
+  write_rds(file_out)
