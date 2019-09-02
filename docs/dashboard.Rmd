@@ -1,0 +1,96 @@
+---
+title: "Workouts Dashboard"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(tidyverse)
+library(googlesheets)
+library(lubridate)
+
+file_data <- here::here("data/workouts.rds")
+
+#==============
+
+df <- read_rds(file_data)
+```
+
+Column {data-width=550}
+-----------------------------------------------------------------------
+
+### How much have you worked out in the past fortnight?
+
+```{r}
+df %>%
+  filter(date > today() - days(13)) %>% 
+  group_by(date) %>%
+  summarize(duration = sum(duration, na.rm = TRUE)) %>%
+  ggplot(aes(date, duration)) +
+  geom_col() +
+  geom_vline(xintercept = today()) +
+  scale_x_date(
+    date_breaks = "1 days", 
+    date_labels = "%b %d",
+    limits = c(today() - days(13), today())
+  ) +
+  scale_y_continuous(
+    breaks = seq(0, 90, by = 15), 
+    labels = function(x) str_c(x, " min")
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(hjust = 1, angle = 45)) +
+  labs(x = NULL, y = "Total Duration of Exercise")
+```
+
+Column {data-width=450}
+-----------------------------------------------------------------------
+
+### Favorite Programs
+
+```{r}
+df %>%
+  mutate(
+    type = case_when(
+      workout_type == "Les Mills On Demand" ~ program,
+      workout_type == "Run/Walk/Bike/Swim" ~ as.character(glue::glue("{cardio_type} ({cardio_style})")),
+      TRUE ~ program
+    )
+  ) %>%
+  group_by(type) %>%
+  summarize(duration = sum(duration)) %>%
+  ggplot(aes(reorder(type, duration), duration)) +
+  geom_col() +
+  coord_flip() +
+  theme_minimal() +
+  labs(
+    x = NULL,
+    y = "Total Minutes"
+  )
+```
+
+### Your Recent Workouts
+
+```{r}
+df %>%
+  mutate(
+    type = case_when(
+      workout_type == "Les Mills On Demand" ~ str_c(program, " ", track),
+      workout_type == "Run/Walk/Bike/Swim" ~ as.character(glue::glue("{cardio_type} ({cardio_style})")),
+      TRUE ~ program
+    ),
+    stretch_duration = if_else(stretch, stretch_duration, 0)
+  ) %>%
+  select(
+    Date = date, 
+    `Workout Type` = type, 
+    `Duration (minutes)` = duration, 
+    `Stretch duration (minutes)` = stretch_duration
+  ) %>% 
+  arrange(desc(Date)) %>% 
+  DT::datatable()
+```
+
