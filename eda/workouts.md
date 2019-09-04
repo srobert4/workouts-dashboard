@@ -60,6 +60,8 @@ df %>%
   labs(x = NULL, y = "Total Duration of Exercise")
 ```
 
+    ## Warning: Removed 1 rows containing missing values (geom_col).
+
 ![](workouts_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
 
 # What type of exercise have I been doing? (Also allow to filter to recent)
