@@ -13,6 +13,13 @@ library(googlesheets)
 library(lubridate)
 
 file_data <- here::here("data/workouts.rds")
+colors <- c(
+  "Les Mills On Demand" = "#ff7f00",
+  "Weights" = "#984ea3",
+  "Run/Walk/Bike/Swim" =  "#4daf4a",
+  "Stretch" = "#377eb8",
+  "Other" = "#e41a1c"
+)
 
 #==============
 
@@ -27,20 +34,18 @@ Column {data-width=550}
 ```{r}
 df %>%
   filter(date > today() - days(13)) %>% 
-  group_by(date) %>%
-  summarize(duration = sum(duration, na.rm = TRUE)) %>%
   ggplot(aes(date, duration)) +
-  geom_col() +
+  geom_col(aes(fill = workout_type), position = "stack") +
   geom_vline(xintercept = today()) +
   scale_x_date(
     date_breaks = "1 days", 
-    date_labels = "%b %d",
-    limits = c(today() - days(13), today())
+    date_labels = "%b %d"
   ) +
   scale_y_continuous(
-    breaks = seq(0, 90, by = 15), 
+    breaks = seq(0, 120, by = 15), 
     labels = function(x) str_c(x, " min")
   ) +
+  scale_fill_manual(values = colors) +
   theme_minimal() +
   theme(axis.text.x = element_text(hjust = 1, angle = 45)) +
   labs(x = NULL, y = "Total Duration of Exercise")
@@ -60,10 +65,11 @@ df %>%
       TRUE ~ program
     )
   ) %>%
-  group_by(type) %>%
+  group_by(workout_type, type) %>%
   summarize(duration = sum(duration)) %>%
   ggplot(aes(reorder(type, duration), duration)) +
-  geom_col() +
+  geom_col(aes(fill = workout_type)) +
+  scale_fill_manual(values = colors) +
   coord_flip() +
   theme_minimal() +
   labs(
