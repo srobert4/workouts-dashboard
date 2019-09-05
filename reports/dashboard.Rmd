@@ -47,8 +47,15 @@ df %>%
   ) +
   scale_fill_manual(values = colors) +
   theme_minimal() +
-  theme(axis.text.x = element_text(hjust = 1, angle = 45)) +
-  labs(x = NULL, y = "Total Duration of Exercise")
+  theme(
+    axis.text.x = element_text(hjust = 1, angle = 45),
+    legend.position = "bottom"
+  ) +
+  labs(
+    x = NULL, 
+    y = "Total Duration of Exercise",
+    fill = NULL
+  )
 ```
 
 Column {data-width=450}
@@ -72,9 +79,13 @@ df %>%
   scale_fill_manual(values = colors) +
   coord_flip() +
   theme_minimal() +
+  theme(
+    legend.position = "bottom"
+  ) +
   labs(
     x = NULL,
-    y = "Total Minutes"
+    y = "Total Minutes",
+    fill = NULL
   )
 ```
 
