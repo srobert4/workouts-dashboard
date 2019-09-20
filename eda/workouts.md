@@ -31,10 +31,10 @@ library(lubridate)
 ``` r
 file_data <- here::here("data/workouts.rds")
 colors <- c(
-  "Les Mills On Demand" = "#ff7f00",
-  "Weights" = "#984ea3",
-  "Run/Walk/Bike/Swim" =  "#4daf4a",
-  "Stretch" = "#377eb8",
+  "Weights" = "#ff7f00",
+  "Core" = "#984ea3",
+  "Cardio - steady" =  "#4daf4a",
+  "Cardio - intense" = "#377eb8",
   "Other" = "#e41a1c"
 )
 
@@ -53,7 +53,8 @@ df %>%
   geom_vline(xintercept = today()) +
   scale_x_date(
     date_breaks = "1 days", 
-    date_labels = "%b %d"
+    date_labels = "%a, %b %d",
+    limits = c(today() - days(13), today())
   ) +
   scale_y_continuous(
     breaks = seq(0, 120, by = 15), 
@@ -64,6 +65,8 @@ df %>%
   theme(axis.text.x = element_text(hjust = 1, angle = 45)) +
   labs(x = NULL, y = "Total Duration of Exercise")
 ```
+
+    ## Warning: Removed 1 rows containing missing values (geom_col).
 
 ![](workouts_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
 
